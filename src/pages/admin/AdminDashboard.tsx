@@ -15,11 +15,19 @@ export default function AdminDashboard() {
 
   const recent = [...appointments].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5)
 
+  // Most performed service
+  const serviceCounts = appointments.reduce<Record<string, number>>((acc, a) => {
+    acc[a.serviceName] = (acc[a.serviceName] ?? 0) + 1
+    return acc
+  }, {})
+  const topService = Object.entries(serviceCounts).sort((a, b) => b[1] - a[1])[0]
+
   const stats = [
     { label: 'Citas pendientes', value: pending.length, icon: Clock, color: '#f59e0b', bg: '#fef3c7' },
     { label: 'Citas confirmadas', value: confirmed.length, icon: Calendar, color: '#10b981', bg: '#d1fae5' },
     { label: 'Clientes registrados', value: clients.length, icon: Users, color: '#6366f1', bg: '#ede9fe' },
     { label: 'Ingresos (confirmados)', value: `$${revenue}`, icon: TrendingUp, color: '#ec4899', bg: '#fce7f3' },
+    { label: 'Proceso más realizado', value: topService ? topService[0] : '—', subValue: topService ? `${topService[1]} vez${topService[1] !== 1 ? 'es' : ''}` : undefined, icon: Sparkles, color: '#a855f7', bg: '#f0e7ff' },
   ]
 
   return (
@@ -32,13 +40,14 @@ export default function AdminDashboard() {
       <div className="container" style={{ padding: '2rem 1.5rem' }}>
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '2.5rem' }}>
-          {stats.map(({ label, value, icon: Icon, color, bg }) => (
+          {stats.map(({ label, value, icon: Icon, color, bg, subValue }) => (
             <div key={label} className="card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <div style={{ width: 52, height: 52, background: bg, borderRadius: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <Icon size={24} color={color} />
               </div>
-              <div>
-                <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1f2937', fontFamily: 'Playfair Display, serif' }}>{value}</div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: subValue ? '1.1rem' : '1.75rem', fontWeight: 700, color: '#1f2937', fontFamily: 'Playfair Display, serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</div>
+                {subValue && <div style={{ fontSize: '0.8rem', color, fontWeight: 600 }}>{subValue}</div>}
                 <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>{label}</div>
               </div>
             </div>

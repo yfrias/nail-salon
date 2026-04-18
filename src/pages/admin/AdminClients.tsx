@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   Users, Calendar, DollarSign, TrendingUp,
   Phone, Mail, Search, Plus, CalendarPlus,
@@ -10,7 +11,11 @@ import AdminCreateAppointmentModal from '../../components/AdminCreateAppointment
 
 export default function AdminClients() {
   const { users, appointments } = useApp()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = searchParams.get('tab') === 'admins' ? 'admins' : 'clients'
+
   const clients = users.filter(u => u.role === 'client')
+  const admins = users.filter(u => u.role === 'admin')
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [preselectedId, setPreselectedId] = useState<string | undefined>()
@@ -32,7 +37,6 @@ export default function AdminClients() {
     return { total: mine.length, confirmed: confirmed.length, pending: pending.length, cancelled: cancelled.length, spent, last }
   }
 
-  // Top client by spending
   const ranked = [...clients].map(c => ({ ...c, ...clientStats(c) })).sort((a, b) => b.spent - a.spent)
 
   const filtered = ranked.filter(c =>
@@ -55,85 +59,115 @@ export default function AdminClients() {
 
       <div className="container" style={{ padding: '2rem 1.5rem' }}>
 
-        {/* Global stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.1rem', marginBottom: '2rem' }}>
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.75rem', background: '#f9fafb', borderRadius: '0.75rem', padding: '0.25rem', maxWidth: 400 }}>
           {[
-            { label: 'Clientes registrados', value: clients.length, icon: Users, color: '#6366f1', bg: '#ede9fe' },
-            { label: 'Total de citas', value: totalAppointments, icon: Calendar, color: '#ec4899', bg: '#fce7f3' },
-            { label: 'Citas confirmadas', value: confirmedAppointments, icon: UserCheck, color: '#10b981', bg: '#d1fae5' },
-            { label: 'Ingresos totales', value: `$${totalRevenue}`, icon: DollarSign, color: '#f59e0b', bg: '#fef3c7' },
-            { label: 'Gasto promedio/cliente', value: `$${avgPerClient}`, icon: TrendingUp, color: '#8b5cf6', bg: '#ede9fe' },
-          ].map(({ label, value, icon: Icon, color, bg }) => (
-            <div key={label} className="card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
-              <div style={{ width: 44, height: 44, background: bg, borderRadius: '0.625rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Icon size={20} color={color} />
-              </div>
-              <div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1f2937', fontFamily: 'Playfair Display, serif', lineHeight: 1 }}>{value}</div>
-                <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.2rem' }}>{label}</div>
-              </div>
-            </div>
+            { key: 'clients', label: `Clientes (${clients.length})`, icon: Users },
+            { key: 'admins', label: `Administradores (${admins.length})`, icon: ShieldCheck },
+          ].map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => setSearchParams(key === 'admins' ? { tab: 'admins' } : {})}
+              style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                padding: '0.625rem 1rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer',
+                fontWeight: 600, fontSize: '0.8rem', transition: 'all 0.2s',
+                background: tab === key ? 'white' : 'transparent',
+                color: tab === key ? '#be185d' : '#6b7280',
+                boxShadow: tab === key ? '0 1px 4px rgb(0 0 0 / 0.08)' : 'none',
+              }}
+            >
+              <Icon size={14} />
+              {label}
+            </button>
           ))}
         </div>
 
-        {/* Top 3 clients */}
-        {ranked.length >= 3 && (
-          <div className="card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
-            <h2 style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: '1.25rem', color: '#1f2937', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Award size={18} color="#f59e0b" />
-              Top clientes
-            </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-              {ranked.slice(0, 3).map((c, i) => (
-                <div key={c.id} style={{
-                  padding: '1rem',
-                  borderRadius: '0.75rem',
-                  background: i === 0 ? 'linear-gradient(135deg,#fef3c7,#fde68a)' : i === 1 ? 'linear-gradient(135deg,#f3f4f6,#e5e7eb)' : 'linear-gradient(135deg,#fdf2f8,#fce7f3)',
-                  border: i === 0 ? '2px solid #f59e0b' : i === 1 ? '2px solid #d1d5db' : '2px solid #fbcfe8',
-                  display: 'flex', alignItems: 'center', gap: '0.875rem',
-                }}>
-                  <div style={{
-                    width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
-                    background: i === 0 ? '#f59e0b' : i === 1 ? '#9ca3af' : '#f9a8d4',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontWeight: 700, color: 'white', fontSize: '1rem',
-                  }}>
-                    {i + 1}
+        {tab === 'admins' ? (
+          <AdminsTab admins={admins} />
+        ) : (
+          <>
+            {/* Global stats */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.1rem', marginBottom: '2rem' }}>
+              {[
+                { label: 'Clientes registrados', value: clients.length, icon: Users, color: '#6366f1', bg: '#ede9fe' },
+                { label: 'Total de citas', value: totalAppointments, icon: Calendar, color: '#ec4899', bg: '#fce7f3' },
+                { label: 'Citas confirmadas', value: confirmedAppointments, icon: UserCheck, color: '#10b981', bg: '#d1fae5' },
+                { label: 'Ingresos totales', value: `$${totalRevenue}`, icon: DollarSign, color: '#f59e0b', bg: '#fef3c7' },
+                { label: 'Gasto promedio/cliente', value: `$${avgPerClient}`, icon: TrendingUp, color: '#8b5cf6', bg: '#ede9fe' },
+              ].map(({ label, value, icon: Icon, color, bg }) => (
+                <div key={label} className="card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+                  <div style={{ width: 44, height: 44, background: bg, borderRadius: '0.625rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon size={20} color={color} />
                   </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, color: '#1f2937', fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
-                    <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>${c.spent} gastados · {c.confirmed} citas</div>
+                  <div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1f2937', fontFamily: 'Playfair Display, serif', lineHeight: 1 }}>{value}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.2rem' }}>{label}</div>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-        )}
 
-        {/* Actions bar */}
-        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ position: 'relative', flex: 1, minWidth: 200, maxWidth: 340 }}>
-            <Search size={15} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-            <input className="form-input" style={{ paddingLeft: '2.5rem', width: '100%' }} placeholder="Buscar por nombre, email o teléfono..." value={search} onChange={e => setSearch(e.target.value)} />
-          </div>
-          <button onClick={() => openModal()} className="btn btn-primary">
-            <Plus size={15} />
-            Nuevo cliente + cita
-          </button>
-        </div>
+            {/* Top 3 clients */}
+            {ranked.length >= 3 && (
+              <div className="card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
+                <h2 style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: '1.25rem', color: '#1f2937', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Award size={18} color="#f59e0b" />
+                  Top clientes
+                </h2>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                  {ranked.slice(0, 3).map((c, i) => (
+                    <div key={c.id} style={{
+                      padding: '1rem',
+                      borderRadius: '0.75rem',
+                      background: i === 0 ? 'linear-gradient(135deg,#fef3c7,#fde68a)' : i === 1 ? 'linear-gradient(135deg,#f3f4f6,#e5e7eb)' : 'linear-gradient(135deg,#fdf2f8,#fce7f3)',
+                      border: i === 0 ? '2px solid #f59e0b' : i === 1 ? '2px solid #d1d5db' : '2px solid #fbcfe8',
+                      display: 'flex', alignItems: 'center', gap: '0.875rem',
+                    }}>
+                      <div style={{
+                        width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+                        background: i === 0 ? '#f59e0b' : i === 1 ? '#9ca3af' : '#f9a8d4',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontWeight: 700, color: 'white', fontSize: '1rem',
+                      }}>
+                        {i + 1}
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, color: '#1f2937', fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
+                        <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>${c.spent} gastados · {c.confirmed} citas</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
-        {/* Client list */}
-        {filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '4rem', color: '#9ca3af' }}>
-            <Users size={48} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
-            <p>{search ? 'No se encontraron clientes' : 'No hay clientes registrados aún'}</p>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {filtered.map(c => (
-              <ClientRow key={c.id} client={c} stats={{ total: c.total, confirmed: c.confirmed, pending: c.pending, cancelled: c.cancelled, spent: c.spent, last: c.last }} onCreateAppointment={() => openModal(c.id)} />
-            ))}
-          </div>
+            {/* Actions bar */}
+            <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ position: 'relative', flex: 1, minWidth: 200, maxWidth: 340 }}>
+                <Search size={15} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                <input className="form-input" style={{ paddingLeft: '2.5rem', width: '100%' }} placeholder="Buscar por nombre, email o teléfono..." value={search} onChange={e => setSearch(e.target.value)} />
+              </div>
+              <button onClick={() => openModal()} className="btn btn-primary">
+                <Plus size={15} />
+                Nuevo cliente + cita
+              </button>
+            </div>
+
+            {/* Client list */}
+            {filtered.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '4rem', color: '#9ca3af' }}>
+                <Users size={48} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
+                <p>{search ? 'No se encontraron clientes' : 'No hay clientes registrados aún'}</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {filtered.map(c => (
+                  <ClientRow key={c.id} client={c} stats={{ total: c.total, confirmed: c.confirmed, pending: c.pending, cancelled: c.cancelled, spent: c.spent, last: c.last }} onCreateAppointment={() => openModal(c.id)} />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -142,6 +176,89 @@ export default function AdminClients() {
           preselectedClientId={preselectedId}
           onClose={() => setModalOpen(false)}
         />
+      )}
+    </div>
+  )
+}
+
+function AdminsTab({ admins }: { admins: User[] }) {
+  const { toggleUserRole, currentUser } = useApp()
+  const [loadingId, setLoadingId] = useState<string | null>(null)
+
+  async function handleToggle(user: User) {
+    if (!confirm(`¿Quitar rol de administrador a ${user.name}?`)) return
+    setLoadingId(user.id)
+    await toggleUserRole(user.id)
+    setLoadingId(null)
+  }
+
+  return (
+    <div>
+      <div className="card" style={{ padding: '1.5rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'linear-gradient(135deg,#f0e7ff,#ede9fe)', border: '1px solid #d8b4fe' }}>
+        <ShieldCheck size={20} color="#7c3aed" />
+        <div>
+          <div style={{ fontWeight: 600, color: '#1f2937', fontSize: '0.9rem' }}>Administradores del sistema</div>
+          <div style={{ fontSize: '0.8rem', color: '#7c3aed', marginTop: '0.15rem' }}>{admins.length} administrador{admins.length !== 1 ? 'es' : ''} registrado{admins.length !== 1 ? 's' : ''}</div>
+        </div>
+      </div>
+
+      {admins.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '4rem', color: '#9ca3af' }}>
+          <ShieldCheck size={48} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
+          <p>No hay administradores registrados</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {admins.map(admin => {
+            const initials = admin.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+            const isSelf = currentUser?.id === admin.id
+            return (
+              <div key={admin.id} className="card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <div style={{
+                  width: 48, height: 48, borderRadius: '50%', flexShrink: 0,
+                  background: 'linear-gradient(135deg,#6366f1,#a855f7)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: 'white', fontWeight: 700, fontSize: '1rem',
+                }}>
+                  {initials}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <span style={{ fontWeight: 600, color: '#1f2937' }}>{admin.name}</span>
+                    {isSelf && (
+                      <span style={{ fontSize: '0.7rem', background: '#ede9fe', color: '#7c3aed', padding: '0.1rem 0.4rem', borderRadius: '9999px', fontWeight: 600 }}>Tú</span>
+                    )}
+                    <span style={{ fontSize: '0.7rem', background: '#ede9fe', color: '#6d28d9', padding: '0.1rem 0.5rem', borderRadius: '9999px', fontWeight: 600 }}>Admin</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.3rem' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: '#6b7280' }}>
+                      <Mail size={12} />{admin.email}
+                    </span>
+                    {admin.phone && (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: '#6b7280' }}>
+                        <Phone size={12} />{admin.phone}
+                      </span>
+                    )}
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.75rem', color: '#9ca3af' }}>
+                      <Clock size={12} />Desde {admin.createdAt}
+                    </span>
+                  </div>
+                </div>
+                {!isSelf && (
+                  <button
+                    onClick={() => handleToggle(admin)}
+                    disabled={loadingId === admin.id}
+                    className="btn btn-sm"
+                    style={{ background: '#fee2e2', color: '#991b1b', border: 'none', display: 'flex', alignItems: 'center', gap: '0.375rem' }}
+                  >
+                    <ShieldOff size={14} />
+                    {loadingId === admin.id ? 'Procesando...' : 'Quitar admin'}
+                  </button>
+                )}
+              </div>
+            )
+          })}
+        </div>
       )}
     </div>
   )
@@ -191,7 +308,6 @@ function ClientRow({ client, stats, onCreateAppointment }: ClientRowProps) {
         style={{ padding: '1.25rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}
         onClick={() => setExpanded(v => !v)}
       >
-        {/* Avatar */}
         <div style={{
           width: 48, height: 48, borderRadius: '50%', flexShrink: 0,
           background: 'linear-gradient(135deg,#ec4899,#a855f7)',
@@ -201,7 +317,6 @@ function ClientRow({ client, stats, onCreateAppointment }: ClientRowProps) {
           {initials}
         </div>
 
-        {/* Info */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 600, color: '#1f2937', fontSize: '1rem' }}>{client.name}</div>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
@@ -217,7 +332,6 @@ function ClientRow({ client, stats, onCreateAppointment }: ClientRowProps) {
           </div>
         </div>
 
-        {/* Mini stats */}
         <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontWeight: 700, fontSize: '1.25rem', color: '#be185d', fontFamily: 'Playfair Display, serif' }}>{stats.total}</div>
@@ -233,7 +347,6 @@ function ClientRow({ client, stats, onCreateAppointment }: ClientRowProps) {
           </div>
         </div>
 
-        {/* Action */}
         <button
           onClick={e => { e.stopPropagation(); onCreateAppointment() }}
           className="btn btn-primary btn-sm"
@@ -243,7 +356,6 @@ function ClientRow({ client, stats, onCreateAppointment }: ClientRowProps) {
         </button>
       </div>
 
-      {/* Expanded: appointment history */}
       {expanded && (
         <div style={{ borderTop: '1px solid #fce7f3', padding: '1.25rem' }}>
           <h4 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#6b7280', marginBottom: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -274,7 +386,6 @@ function ClientRow({ client, stats, onCreateAppointment }: ClientRowProps) {
             </div>
           )}
 
-          {/* Spending bar */}
           {stats.total > 0 && (
             <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
               {(['confirmed', 'pending', 'cancelled'] as const).map(status => {
@@ -300,15 +411,12 @@ function ClientRow({ client, stats, onCreateAppointment }: ClientRowProps) {
             </div>
           )}
 
-          {/* Admin controls */}
           {currentUser?.id !== client.id && (
             <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid #fce7f3' }}>
               <h4 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#6b7280', marginBottom: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Gestión de cuenta
               </h4>
               <div style={{ display: 'flex', gap: '0.625rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
-
-                {/* Toggle role */}
                 <button
                   onClick={handleToggleRole}
                   disabled={roleLoading}
@@ -324,7 +432,6 @@ function ClientRow({ client, stats, onCreateAppointment }: ClientRowProps) {
                   {client.role === 'admin' ? 'Quitar admin' : 'Hacer admin'}
                 </button>
 
-                {/* Change password */}
                 {!showPwForm ? (
                   <button
                     onClick={() => { setShowPwForm(true); setPwStatus('idle') }}
