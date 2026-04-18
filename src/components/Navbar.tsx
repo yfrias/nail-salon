@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Sparkles, Menu, X, LogOut, User, Calendar, LayoutDashboard, Users } from 'lucide-react'
+import { Sparkles, Menu, X, LogOut, User, Calendar, LayoutDashboard, Users, Settings } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 
 export default function Navbar() {
@@ -26,7 +26,10 @@ export default function Navbar() {
       ]
     : [
         { to: '/servicios', label: 'Servicios', icon: Sparkles },
-        ...(currentUser ? [{ to: '/mis-citas', label: 'Mis Citas', icon: Calendar }] : []),
+        ...(currentUser ? [
+          { to: '/mis-citas', label: 'Mis Citas', icon: Calendar },
+          { to: '/mi-cuenta', label: 'Mi Cuenta', icon: Settings },
+        ] : []),
       ]
 
   return (

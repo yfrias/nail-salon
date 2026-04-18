@@ -18,6 +18,9 @@ interface AppContextType {
   addAppointment: (a: Omit<Appointment, 'id' | 'createdAt'>) => Promise<void>
   updateAppointmentStatus: (id: string, status: Appointment['status']) => Promise<void>
   cancelAppointment: (id: string) => Promise<void>
+  changePassword: (currentPassword: string, newPassword: string) => Promise<boolean>
+  adminChangeUserPassword: (userId: string, newPassword: string) => Promise<boolean>
+  toggleUserRole: (userId: string) => Promise<void>
 }
 
 const AppContext = createContext<AppContextType | null>(null)
@@ -134,12 +137,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setAppointments(prev => prev.map(a => a.id === id ? appt : a))
   }
 
+  async function changePassword(currentPassword: string, newPassword: string): Promise<boolean> {
+    if (!currentUser) return false
+    try {
+      await api.users.changePassword(currentUser.id, currentPassword, newPassword)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  async function adminChangeUserPassword(userId: string, newPassword: string): Promise<boolean> {
+    try {
+      await api.users.changePassword(userId, null, newPassword)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  async function toggleUserRole(userId: string): Promise<void> {
+    const updated = await api.users.toggleRole(userId)
+    setUsers(prev => prev.map(u => u.id === userId ? updated : u))
+  }
+
   return (
     <AppContext.Provider value={{
       services, users, appointments, currentUser, loading,
       login, logout, register, adminRegisterClient,
       addService, updateService, deleteService,
       addAppointment, updateAppointmentStatus, cancelAppointment,
+      changePassword, adminChangeUserPassword, toggleUserRole,
     }}>
       {children}
     </AppContext.Provider>

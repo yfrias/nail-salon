@@ -2,7 +2,7 @@ import { useState } from 'react'
 import {
   Users, Calendar, DollarSign, TrendingUp,
   Phone, Mail, Search, Plus, CalendarPlus,
-  Award, Clock, UserCheck,
+  Award, Clock, UserCheck, ShieldCheck, ShieldOff, KeyRound, CheckCircle, AlertCircle,
 } from 'lucide-react'
 import { useApp } from '../../contexts/AppContext'
 import type { User } from '../../types'
@@ -162,8 +162,26 @@ interface ClientRowProps {
 
 function ClientRow({ client, stats, onCreateAppointment }: ClientRowProps) {
   const [expanded, setExpanded] = useState(false)
-  const { appointments } = useApp()
+  const [showPwForm, setShowPwForm] = useState(false)
+  const [newPw, setNewPw] = useState('')
+  const [pwStatus, setPwStatus] = useState<'idle' | 'ok' | 'error'>('idle')
+  const [roleLoading, setRoleLoading] = useState(false)
+  const { appointments, adminChangeUserPassword, toggleUserRole, currentUser } = useApp()
   const mine = appointments.filter(a => a.clientId === client.id).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+  async function handleChangePassword() {
+    if (!newPw || newPw.length < 6) { setPwStatus('error'); return }
+    const ok = await adminChangeUserPassword(client.id, newPw)
+    if (ok) { setPwStatus('ok'); setNewPw(''); setTimeout(() => { setPwStatus('idle'); setShowPwForm(false) }, 2000) }
+    else setPwStatus('error')
+  }
+
+  async function handleToggleRole() {
+    if (!confirm(`¿${client.role === 'admin' ? 'Quitar rol de administrador a' : 'Hacer administrador a'} ${client.name}?`)) return
+    setRoleLoading(true)
+    await toggleUserRole(client.id)
+    setRoleLoading(false)
+  }
 
   const initials = client.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
 
@@ -279,6 +297,65 @@ function ClientRow({ client, stats, onCreateAppointment }: ClientRowProps) {
               <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />Confirmadas: {stats.confirmed}</span>
               <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />Pendientes: {stats.pending}</span>
               <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />Canceladas: {stats.cancelled}</span>
+            </div>
+          )}
+
+          {/* Admin controls */}
+          {currentUser?.id !== client.id && (
+            <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid #fce7f3' }}>
+              <h4 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#6b7280', marginBottom: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Gestión de cuenta
+              </h4>
+              <div style={{ display: 'flex', gap: '0.625rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+
+                {/* Toggle role */}
+                <button
+                  onClick={handleToggleRole}
+                  disabled={roleLoading}
+                  className="btn btn-sm"
+                  style={{
+                    background: client.role === 'admin' ? '#fee2e2' : '#ede9fe',
+                    color: client.role === 'admin' ? '#991b1b' : '#6d28d9',
+                    border: 'none',
+                    display: 'flex', alignItems: 'center', gap: '0.375rem',
+                  }}
+                >
+                  {client.role === 'admin' ? <ShieldOff size={14} /> : <ShieldCheck size={14} />}
+                  {client.role === 'admin' ? 'Quitar admin' : 'Hacer admin'}
+                </button>
+
+                {/* Change password */}
+                {!showPwForm ? (
+                  <button
+                    onClick={() => { setShowPwForm(true); setPwStatus('idle') }}
+                    className="btn btn-sm btn-secondary"
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}
+                  >
+                    <KeyRound size={14} />
+                    Cambiar contraseña
+                  </button>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <input
+                      type="text"
+                      className="form-input"
+                      style={{ width: 180, fontSize: '0.85rem', padding: '0.4rem 0.75rem' }}
+                      placeholder="Nueva contraseña (mín. 6)"
+                      value={newPw}
+                      onChange={e => { setNewPw(e.target.value); setPwStatus('idle') }}
+                    />
+                    <button onClick={handleChangePassword} className="btn btn-sm btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <CheckCircle size={13} />
+                      Guardar
+                    </button>
+                    <button onClick={() => { setShowPwForm(false); setNewPw(''); setPwStatus('idle') }} className="btn btn-sm btn-secondary">
+                      Cancelar
+                    </button>
+                    {pwStatus === 'ok' && <span style={{ fontSize: '0.8rem', color: '#065f46', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><CheckCircle size={13} />Guardada</span>}
+                    {pwStatus === 'error' && <span style={{ fontSize: '0.8rem', color: '#991b1b', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><AlertCircle size={13} />Error</span>}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

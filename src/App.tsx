@@ -11,6 +11,7 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminServices from './pages/admin/AdminServices'
 import AdminAppointments from './pages/admin/AdminAppointments'
 import AdminClients from './pages/admin/AdminClients'
+import MiCuenta from './pages/MiCuenta'
 
 function RequireAdmin({ children }: { children: React.ReactNode }) {
   const { currentUser } = useApp()
@@ -36,6 +37,7 @@ function AppRoutes() {
           <Route path="/servicios" element={<Services />} />
           <Route path="/agendar/:serviceId" element={<RequireAuth><BookAppointment /></RequireAuth>} />
           <Route path="/mis-citas" element={<RequireAuth><MyAppointments /></RequireAuth>} />
+          <Route path="/mi-cuenta" element={<RequireAuth><MiCuenta /></RequireAuth>} />
           <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
           <Route path="/admin/clientes" element={<RequireAdmin><AdminClients /></RequireAdmin>} />
           <Route path="/admin/servicios" element={<RequireAdmin><AdminServices /></RequireAdmin>} />

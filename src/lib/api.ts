@@ -49,5 +49,9 @@ export const api = {
     list: () => req<User[]>('/users'),
     create: (data: Omit<User, 'id' | 'role' | 'createdAt'>) =>
       req<User>('/users', { method: 'POST', body: JSON.stringify(data) }),
+    changePassword: (id: string, currentPassword: string | null, newPassword: string) =>
+      req<{ ok: boolean }>(`/users/${id}/password`, { method: 'PUT', body: JSON.stringify({ currentPassword, newPassword }) }),
+    toggleRole: (id: string) =>
+      req<User>(`/users/${id}/role`, { method: 'PUT' }),
   },
 }
