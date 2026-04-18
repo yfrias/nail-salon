@@ -1,7 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import { prisma } from '../_lib/prisma'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
 
 function fmt(u: { id: string; name: string; email: string; phone: string; role: string; createdAt: Date }) {
   return { id: u.id, name: u.name, email: u.email, phone: u.phone, role: u.role, createdAt: u.createdAt.toISOString().split('T')[0] }
@@ -17,7 +19,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET!, { expiresIn: '7d' })
     res.json({ user: fmt(user), token })
-  } catch {
-    res.status(500).json({ error: 'Error del servidor' })
+  } catch (e) {
+    res.status(500).json({ error: String(e) })
   }
 }
