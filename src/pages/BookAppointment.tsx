@@ -7,7 +7,6 @@ const TIMES = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','14:00','
 
 function getMinDate() {
   const d = new Date()
-  d.setDate(d.getDate() + 1)
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
