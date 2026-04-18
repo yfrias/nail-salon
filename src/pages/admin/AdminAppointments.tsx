@@ -3,6 +3,7 @@ import { Calendar, Clock, DollarSign, User, Phone, FileText, CheckCircle, XCircl
 import { useApp } from '../../contexts/AppContext'
 import type { Appointment } from '../../types'
 import AdminCreateAppointmentModal from '../../components/AdminCreateAppointmentModal'
+import ConfirmModal from '../../components/ConfirmModal'
 
 const FILTERS = ['Todas', 'Pendientes', 'Confirmadas', 'Completadas', 'Canceladas']
 
@@ -25,6 +26,7 @@ export default function AdminAppointments() {
   const [filter, setFilter] = useState('Todas')
   const [dateFilter, setDateFilter] = useState('')
   const [createModal, setCreateModal] = useState(false)
+  const [cancelTarget, setCancelTarget] = useState<Appointment | null>(null)
 
   const filtered = appointments.filter(a => {
     const matchStatus =
@@ -104,7 +106,7 @@ export default function AdminAppointments() {
                 </button>
               )}
               <button
-                onClick={async () => { if (confirm('¿Cancelar esta cita?')) await cancelAppointment(a.id) }}
+                onClick={() => setCancelTarget(a)}
                 className="btn btn-danger btn-sm"
                 style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}
               >
@@ -178,6 +180,17 @@ export default function AdminAppointments() {
       </div>
 
       {createModal && <AdminCreateAppointmentModal onClose={() => setCreateModal(false)} />}
+
+      {cancelTarget && (
+        <ConfirmModal
+          title="Cancelar cita"
+          message={`Estimado/a cliente, ¿está seguro/a que desea cancelar la cita de ${cancelTarget.serviceName} del ${cancelTarget.date} a las ${cancelTarget.time}?`}
+          confirmLabel="Sí, cancelar"
+          cancelLabel="No, volver"
+          onConfirm={async () => { await cancelAppointment(cancelTarget.id); setCancelTarget(null) }}
+          onCancel={() => setCancelTarget(null)}
+        />
+      )}
     </div>
   )
 }

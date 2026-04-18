@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Calendar, Clock, DollarSign, FileText, Plus } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
+import type { Appointment } from '../types'
+import ConfirmModal from '../components/ConfirmModal'
 
 const statusLabel: Record<string, string> = {
   pending: 'Pendiente',
@@ -12,20 +15,22 @@ const statusLabel: Record<string, string> = {
 export default function MyAppointments() {
   const { currentUser, appointments, cancelAppointment } = useApp()
   const navigate = useNavigate()
+  const [cancelTarget, setCancelTarget] = useState<Appointment | null>(null)
 
   if (!currentUser) { navigate('/login'); return null }
 
   const mine = appointments.filter(a => a.clientId === currentUser.id)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
-  const active = mine.filter(a => a.status !== 'cancelled')
+  const active = mine.filter(a => a.status !== 'cancelled' && a.status !== 'completed')
+  const completed = mine.filter(a => a.status === 'completed')
   const cancelled = mine.filter(a => a.status === 'cancelled')
 
-  function canCancel(a: { date: string; status: string }) {
-    return a.status !== 'cancelled' && new Date(a.date) > new Date()
+  function canCancel(a: Appointment) {
+    return (a.status === 'pending' || a.status === 'confirmed') && new Date(a.date) > new Date()
   }
 
-  function AppCard({ a }: { a: (typeof mine)[0] }) {
+  function AppCard({ a }: { a: Appointment }) {
     return (
       <div className="card fade-in" style={{ padding: '1.25rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem' }}>
@@ -53,7 +58,7 @@ export default function MyAppointments() {
             <span className={`badge badge-${a.status}`}>{statusLabel[a.status]}</span>
             {canCancel(a) && (
               <button
-                onClick={async () => { if (confirm('¿Cancelar esta cita?')) await cancelAppointment(a.id) }}
+                onClick={() => setCancelTarget(a)}
                 className="btn btn-danger btn-sm"
               >
                 Cancelar
@@ -98,6 +103,16 @@ export default function MyAppointments() {
                 </div>
               </section>
             )}
+            {completed.length > 0 && (
+              <section style={{ marginBottom: '2.5rem' }}>
+                <h2 style={{ fontSize: '1.15rem', marginBottom: '1rem', color: '#1e40af' }}>
+                  Citas completadas ({completed.length})
+                </h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', opacity: 0.8 }}>
+                  {completed.map(a => <AppCard key={a.id} a={a} />)}
+                </div>
+              </section>
+            )}
             {cancelled.length > 0 && (
               <section>
                 <h2 style={{ fontSize: '1.15rem', marginBottom: '1rem', color: '#9ca3af' }}>
@@ -111,6 +126,20 @@ export default function MyAppointments() {
           </>
         )}
       </div>
+
+      {cancelTarget && (
+        <ConfirmModal
+          title="Cancelar cita"
+          message={`Estimado/a cliente, ¿está seguro/a que desea cancelar la cita de ${cancelTarget.serviceName} del ${cancelTarget.date} a las ${cancelTarget.time}?`}
+          confirmLabel="Sí, cancelar"
+          cancelLabel="No, volver"
+          onConfirm={async () => {
+            await cancelAppointment(cancelTarget.id)
+            setCancelTarget(null)
+          }}
+          onCancel={() => setCancelTarget(null)}
+        />
+      )}
     </div>
   )
 }
