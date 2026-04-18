@@ -1,10 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { PrismaClient } from '@prisma/client'
 
 export default async function handler(_req: VercelRequest, res: VercelResponse) {
-  res.json({
-    ok: true,
-    node: process.version,
-    hasDB: !!process.env.DATABASE_URL,
-    hasJWT: !!process.env.JWT_SECRET,
-  })
+  try {
+    const prisma = new PrismaClient()
+    const count = await prisma.user.count()
+    await prisma.$disconnect()
+    res.json({ ok: true, users: count })
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e) })
+  }
 }
