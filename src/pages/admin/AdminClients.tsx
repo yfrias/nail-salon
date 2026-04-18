@@ -379,7 +379,7 @@ function ClientRow({ client, stats, onCreateAppointment }: ClientRowProps) {
                   </span>
                   <span style={{ fontWeight: 600, color: '#be185d' }}>${a.servicePrice}</span>
                   <span className={`badge badge-${a.status}`}>
-                    {a.status === 'pending' ? 'Pendiente' : a.status === 'confirmed' ? 'Confirmada' : 'Cancelada'}
+                    {a.status === 'pending' ? 'Pendiente' : a.status === 'confirmed' ? 'Confirmada' : a.status === 'completed' ? 'Completada' : 'Cancelada'}
                   </span>
                 </div>
               ))}

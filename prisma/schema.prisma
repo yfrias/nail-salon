@@ -16,6 +16,7 @@ enum Role {
 enum AppointmentStatus {
   pending
   confirmed
+  completed
   cancelled
 }
 

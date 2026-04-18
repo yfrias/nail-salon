@@ -5,6 +5,7 @@ import { useApp } from '../contexts/AppContext'
 const statusLabel: Record<string, string> = {
   pending: 'Pendiente',
   confirmed: 'Confirmada',
+  completed: 'Completada',
   cancelled: 'Cancelada',
 }
 

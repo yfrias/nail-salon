@@ -159,7 +159,7 @@ export default function AdminDashboard() {
                       <td style={{ padding: '0.75rem' }}>{a.time}</td>
                       <td style={{ padding: '0.75rem' }}>
                         <span className={`badge badge-${a.status}`}>
-                          {a.status === 'pending' ? 'Pendiente' : a.status === 'confirmed' ? 'Confirmada' : 'Cancelada'}
+                          {a.status === 'pending' ? 'Pendiente' : a.status === 'confirmed' ? 'Confirmada' : a.status === 'completed' ? 'Completada' : 'Cancelada'}
                         </span>
                       </td>
                     </tr>

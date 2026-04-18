@@ -1,15 +1,23 @@
 import { useState } from 'react'
-import { Calendar, Clock, DollarSign, User, Phone, FileText, CheckCircle, XCircle, CalendarPlus } from 'lucide-react'
+import { Calendar, Clock, DollarSign, User, Phone, FileText, CheckCircle, XCircle, CalendarPlus, Star } from 'lucide-react'
 import { useApp } from '../../contexts/AppContext'
 import type { Appointment } from '../../types'
 import AdminCreateAppointmentModal from '../../components/AdminCreateAppointmentModal'
 
-const FILTERS = ['Todas', 'Pendientes', 'Confirmadas', 'Canceladas']
+const FILTERS = ['Todas', 'Pendientes', 'Confirmadas', 'Completadas', 'Canceladas']
 
 const statusLabel: Record<string, string> = {
   pending: 'Pendiente',
   confirmed: 'Confirmada',
+  completed: 'Completada',
   cancelled: 'Cancelada',
+}
+
+const statusBorderColor: Record<string, string> = {
+  pending: '#f59e0b',
+  confirmed: '#10b981',
+  completed: '#3b82f6',
+  cancelled: '#ef4444',
 }
 
 export default function AdminAppointments() {
@@ -23,12 +31,14 @@ export default function AdminAppointments() {
       filter === 'Todas' ||
       (filter === 'Pendientes' && a.status === 'pending') ||
       (filter === 'Confirmadas' && a.status === 'confirmed') ||
+      (filter === 'Completadas' && a.status === 'completed') ||
       (filter === 'Canceladas' && a.status === 'cancelled')
     const matchDate = !dateFilter || a.date === dateFilter
     return matchStatus && matchDate
   }).sort((a, b) => {
-    if (a.status === 'pending' && b.status !== 'pending') return -1
-    if (b.status === 'pending' && a.status !== 'pending') return 1
+    const order = { pending: 0, confirmed: 1, completed: 2, cancelled: 3 }
+    const diff = (order[a.status as keyof typeof order] ?? 4) - (order[b.status as keyof typeof order] ?? 4)
+    if (diff !== 0) return diff
     return new Date(a.date).getTime() - new Date(b.date).getTime()
   })
 
@@ -36,7 +46,7 @@ export default function AdminAppointments() {
     return (
       <div className="card fade-in" style={{
         padding: '1.25rem',
-        borderLeft: `4px solid ${a.status === 'pending' ? '#f59e0b' : a.status === 'confirmed' ? '#10b981' : '#ef4444'}`,
+        borderLeft: `4px solid ${statusBorderColor[a.status] ?? '#d1d5db'}`,
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div style={{ flex: 1 }}>
@@ -71,7 +81,7 @@ export default function AdminAppointments() {
             )}
           </div>
 
-          {a.status !== 'cancelled' && (
+          {a.status !== 'cancelled' && a.status !== 'completed' && (
             <div style={{ display: 'flex', gap: '0.5rem', flexDirection: 'column' }}>
               {a.status === 'pending' && (
                 <button
@@ -81,6 +91,16 @@ export default function AdminAppointments() {
                 >
                   <CheckCircle size={14} />
                   Confirmar
+                </button>
+              )}
+              {a.status === 'confirmed' && (
+                <button
+                  onClick={async () => updateAppointmentStatus(a.id, 'completed')}
+                  className="btn btn-sm"
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', background: '#dbeafe', color: '#1e40af', border: 'none' }}
+                >
+                  <Star size={14} />
+                  Completar
                 </button>
               )}
               <button
@@ -123,7 +143,6 @@ export default function AdminAppointments() {
           </div>
         )}
 
-        {/* Filters + create button */}
         <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
           <button onClick={() => setCreateModal(true)} className="btn btn-primary">
             <CalendarPlus size={15} />
@@ -131,7 +150,7 @@ export default function AdminAppointments() {
           </button>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             {FILTERS.map(f => (
               <button key={f} onClick={() => setFilter(f)} className="btn btn-sm" style={{
                 background: filter === f ? 'linear-gradient(135deg, #ec4899, #a855f7)' : 'white',

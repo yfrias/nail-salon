@@ -171,6 +171,11 @@ img {
   color: #991b1b;
 }
 
+.badge-completed {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;
