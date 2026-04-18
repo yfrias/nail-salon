@@ -183,8 +183,8 @@ export default function AdminAppointments() {
 
       {cancelTarget && (
         <ConfirmModal
-          title="Cancelar cita"
-          message={`Estimado/a cliente, ¿está seguro/a que desea cancelar la cita de ${cancelTarget.serviceName} del ${cancelTarget.date} a las ${cancelTarget.time}?`}
+          title="Cancelar Cita"
+          message="¿Desea cancelar la cita?"
           confirmLabel="Sí, cancelar"
           cancelLabel="No, volver"
           onConfirm={async () => { await cancelAppointment(cancelTarget.id); setCancelTarget(null) }}
