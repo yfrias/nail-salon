@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AppProvider, useApp } from './contexts/AppContext'
 import Navbar from './components/Navbar'
 import Home from './pages/Home'
@@ -21,7 +21,8 @@ function RequireAdmin({ children }: { children: React.ReactNode }) {
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { currentUser } = useApp()
-  if (!currentUser) return <Navigate to="/login" replace />
+  const location = useLocation()
+  if (!currentUser) return <Navigate to="/login" state={{ from: location.pathname }} replace />
   return <>{children}</>
 }
 

@@ -1,22 +1,24 @@
-import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Sparkles, Mail, Lock, AlertCircle } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 
 export default function Login() {
   const { login } = useApp()
   const navigate = useNavigate()
+  const location = useLocation()
+  const from = (location.state as { from?: string })?.from
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
 
-  async function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     const ok = await login(email, password)
     if (ok) {
       const stored = JSON.parse(localStorage.getItem('ns_current_user') || 'null')
-      navigate(stored?.role === 'admin' ? '/admin' : '/')
+      navigate(from ?? (stored?.role === 'admin' ? '/admin' : '/'))
     } else {
       setError('Correo o contraseña incorrectos')
     }

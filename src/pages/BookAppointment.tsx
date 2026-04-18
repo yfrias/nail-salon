@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Calendar, Clock, CheckCircle, DollarSign } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
@@ -8,17 +8,25 @@ const TIMES = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','14:00','
 function getMinDate() {
   const d = new Date()
   d.setDate(d.getDate() + 1)
-  return d.toISOString().split('T')[0]
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
 }
 
 export default function BookAppointment() {
   const { serviceId } = useParams<{ serviceId: string }>()
-  const { services, currentUser, appointments, addAppointment } = useApp()
+  const { services, currentUser, appointments, addAppointment, loading } = useApp()
   const navigate = useNavigate()
   const [date, setDate] = useState('')
   const [time, setTime] = useState('')
   const [notes, setNotes] = useState('')
   const [done, setDone] = useState(false)
+  const [submitError, setSubmitError] = useState('')
+
+  if (loading) return (
+    <div style={{ padding: '4rem', textAlign: 'center', color: '#9ca3af' }}>Cargando...</div>
+  )
 
   const service = services.find(s => s.id === serviceId)
   if (!service) return <div style={{ padding: '4rem', textAlign: 'center', color: '#9ca3af' }}>Servicio no encontrado.</div>
@@ -28,22 +36,27 @@ export default function BookAppointment() {
     return appointments.some(a => a.serviceId === serviceId && a.date === date && a.time === t && a.status !== 'cancelled')
   }
 
-  async function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    await addAppointment({
-      clientId: currentUser!.id,
-      clientName: currentUser!.name,
-      clientEmail: currentUser!.email,
-      clientPhone: currentUser!.phone,
-      serviceId: service!.id,
-      serviceName: service!.name,
-      servicePrice: service!.price,
-      date,
-      time,
-      notes,
-      status: 'pending',
-    })
-    setDone(true)
+    setSubmitError('')
+    try {
+      await addAppointment({
+        clientId: currentUser!.id,
+        clientName: currentUser!.name,
+        clientEmail: currentUser!.email,
+        clientPhone: currentUser!.phone,
+        serviceId: service!.id,
+        serviceName: service!.name,
+        servicePrice: service!.price,
+        date,
+        time,
+        notes,
+        status: 'pending',
+      })
+      setDone(true)
+    } catch {
+      setSubmitError('No se pudo solicitar la cita. Intenta de nuevo.')
+    }
   }
 
   if (done) {
@@ -168,6 +181,12 @@ export default function BookAppointment() {
                 style={{ resize: 'vertical' }}
               />
             </div>
+
+            {submitError && (
+              <div style={{ background: '#fee2e2', color: '#991b1b', padding: '0.75rem 1rem', borderRadius: '0.5rem', fontSize: '0.875rem' }}>
+                {submitError}
+              </div>
+            )}
 
             <button type="submit" disabled={!date || !time} className="btn btn-primary" style={{
               justifyContent: 'center',
