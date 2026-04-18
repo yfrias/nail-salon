@@ -1,4 +1,4 @@
-import type { Service, User, Appointment } from '../types'
+import type { Service, User, Appointment, AvailabilityConfig } from '../types'
 
 const BASE = '/api'
 
@@ -44,6 +44,11 @@ export const api = {
       req<Appointment>('/appointments', { method: 'POST', body: JSON.stringify(data) }),
     updateStatus: (id: string, status: Appointment['status']) =>
       req<Appointment>(`/appointments/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+  },
+  availability: {
+    get: () => req<AvailabilityConfig>('/availability'),
+    update: (data: Omit<AvailabilityConfig, 'id'>) =>
+      req<AvailabilityConfig>('/availability', { method: 'PUT', body: JSON.stringify(data) }),
   },
   users: {
     list: () => req<User[]>('/users'),

@@ -19,6 +19,15 @@ export interface User {
   createdAt: string
 }
 
+export interface AvailabilityConfig {
+  id: string
+  activeMonths: string
+  activeDays: string
+  timeStart: string
+  timeEnd: string
+  intervalMin: number
+}
+
 export interface Appointment {
   id: string
   clientId: string

@@ -66,3 +66,14 @@ model Appointment {
 
   @@map("appointments")
 }
+
+model AvailabilityConfig {
+  id           String @id @default("default")
+  activeMonths String @default("0,1,2,3,4,5,6,7,8,9,10,11")
+  activeDays   String @default("1,2,3,4,5,6")
+  timeStart    String @default("09:00")
+  timeEnd      String @default("17:30")
+  intervalMin  Int    @default(30)
+
+  @@map("availability_config")
+}

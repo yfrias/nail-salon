@@ -11,6 +11,7 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminServices from './pages/admin/AdminServices'
 import AdminAppointments from './pages/admin/AdminAppointments'
 import AdminClients from './pages/admin/AdminClients'
+import AdminAvailability from './pages/admin/AdminAvailability'
 import MiCuenta from './pages/MiCuenta'
 
 function RequireAdmin({ children }: { children: React.ReactNode }) {
@@ -43,6 +44,7 @@ function AppRoutes() {
           <Route path="/admin/clientes" element={<RequireAdmin><AdminClients /></RequireAdmin>} />
           <Route path="/admin/servicios" element={<RequireAdmin><AdminServices /></RequireAdmin>} />
           <Route path="/admin/citas" element={<RequireAdmin><AdminAppointments /></RequireAdmin>} />
+          <Route path="/admin/disponibilidad" element={<RequireAdmin><AdminAvailability /></RequireAdmin>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

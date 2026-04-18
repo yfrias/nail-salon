@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Sparkles, Menu, X, LogOut, Calendar, LayoutDashboard, Users, ChevronDown, UserCircle, KeyRound, ShieldCheck } from 'lucide-react'
+import { Sparkles, Menu, X, LogOut, Calendar, LayoutDashboard, Users, ChevronDown, UserCircle, KeyRound, ShieldCheck, Settings } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 
 export default function Navbar() {
@@ -37,6 +37,7 @@ export default function Navbar() {
         { to: '/admin/clientes', label: 'Clientes', icon: Users },
         { to: '/admin/servicios', label: 'Servicios', icon: Sparkles },
         { to: '/admin/citas', label: 'Citas', icon: Calendar },
+        { to: '/admin/disponibilidad', label: 'Disponibilidad', icon: Settings },
       ]
     : [
         { to: '/servicios', label: 'Servicios', icon: Sparkles },
